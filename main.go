@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
@@ -17,10 +18,17 @@ var basePath = "C:\\jav"
 var pageIndex = 1
 var totalPhoto = make(map[string]string)
 var deletePhoto []string
+var url = ""
 
 func getActressList(url string, localPage int) {
 	client, _ := cloudscraper.Init(false, false)
-	requestUrl := fmt.Sprintf("%s&page=%d", url, localPage)
+	var requestUrl string
+	if strings.Contains(url, "?") {
+		requestUrl = fmt.Sprintf("%s&page=%d", url, localPage)
+	} else {
+		requestUrl = fmt.Sprintf("%s?page=%d", url, localPage)
+	}
+
 	res, _ := client.Get(requestUrl, make(map[string]string), "")
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(res.Body))
@@ -133,7 +141,17 @@ func getMovieInfo(url string, number string) {
 }
 
 func main() {
-	getActressList("https://missav.com/dm51/actresses/%E6%9D%BE%E4%B8%8B%E7%B4%97%E6%A6%AE%E5%AD%90?filters=individual", 1)
+	flag.StringVar(&url, "url", "", "missav url")
+	// 下载目录
+	flag.StringVar(&basePath, "basePath", "C:\\jav", "photo dir")
+	flag.Parse()
+
+	if len(url) == 0 {
+		fmt.Println("missav url is empty")
+		return
+	}
+
+	getActressList(url, 1)
 
 	fmt.Printf("total video is %d\n", len(totalPhoto))
 

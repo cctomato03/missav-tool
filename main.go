@@ -20,6 +20,15 @@ var totalPhoto = make(map[string]string)
 var deletePhoto []string
 var url = ""
 
+func createDir(path string) {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			_ = os.MkdirAll(path, os.ModePerm)
+		}
+	}
+}
+
 func getActressList(url string, localPage int) {
 	client, _ := cloudscraper.Init(false, false)
 	var requestUrl string
@@ -112,7 +121,12 @@ func getMovieInfo(url string, number string) {
 			}
 		})
 
-		filePath := fmt.Sprintf("%s/%s-%s.jpg", basePath, movieTime, number)
+		years := strings.Split(movieTime, "-")[0]
+
+		dirFile := fmt.Sprintf("%s/%s", basePath, years)
+		createDir(dirFile)
+
+		filePath := fmt.Sprintf("%s/%s-%s.jpg", dirFile, movieTime, number)
 
 		f, err := os.Create(filePath)
 		if err != nil {
@@ -135,7 +149,7 @@ func getMovieInfo(url string, number string) {
 
 		_ = update.PrepareAndUpdateExif(source, out, exifProps)
 
-		deletePhoto = append(deletePhoto, fmt.Sprintf("%s-%s", movieTime, number))
+		deletePhoto = append(deletePhoto, filePath)
 	}
 	time.Sleep(1 * time.Second)
 }
@@ -162,9 +176,8 @@ func main() {
 	time.Sleep(10 * time.Second)
 
 	for _, value := range deletePhoto {
-		filePath := fmt.Sprintf("%s/%s.jpg", basePath, value)
-		bakFilePath := fmt.Sprintf("%s.bak", filePath)
-		_ = os.Remove(filePath)
-		_ = os.Rename(bakFilePath, filePath)
+		bakFilePath := fmt.Sprintf("%s.bak", value)
+		_ = os.Remove(value)
+		_ = os.Rename(bakFilePath, value)
 	}
 }
